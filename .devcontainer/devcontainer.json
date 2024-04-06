@@ -1,0 +1,5 @@
+// For format details, see https://aka.ms/devcontainer.json.
+{
+	"name": "aelfinity-workshop",
+	"image": "ghcr.io/yongenaelf/aelfinity-workshop:1.4.0"
+}

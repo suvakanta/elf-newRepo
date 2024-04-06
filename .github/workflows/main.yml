@@ -1,0 +1,53 @@
+name: "main"
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v4
+
+      - name: Run in dev container
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ghcr.io/yongenaelf/aelfinity-workshop
+          push: never
+          runCmd: |
+            cd src
+            dotnet build
+            cd ../test
+            dotnet test
+
+      - name: Deploy to testnet
+        uses: yongenaelf/aelf-testnet-deploy-action@v1.4.3
+        id: deploy
+        with:
+          private-key: ${{ secrets.PRIVATEKEY }}
+          wallet-address: ${{ secrets.WALLET_ADDRESS }}
+    outputs:
+      deploymentid: ${{ steps.deploy.outputs.deployment-transaction-id }}
+
+  proposal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Proposal Id
+        id: proposal
+        uses: yongenaelf/aelf-deploy-proposal-id-action@v1.3.1
+        with:
+          transaction-id: ${{ needs.build.outputs.deploymentid }}
+    outputs:
+      proposalid: ${{ steps.proposal.outputs.deployment-proposal-id }}
+    needs: build
+
+  details:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Proposal Details
+        uses: yongenaelf/aelf-proposal-details-action@v1.2.4
+        with:
+          proposal-id: ${{ needs.proposal.outputs.proposalid }}
+    needs: proposal
